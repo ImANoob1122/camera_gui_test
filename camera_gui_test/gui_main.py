@@ -63,8 +63,8 @@ class CameraGuiApp(Node):
         # Image Topic Selection
         tk.Label(self.control_frame, text="Select Image Topic:").pack(pady=(10,0), padx=5, anchor=tk.W)
         self.image_topic_var = tk.StringVar(self.root)
-        self.image_topic_var.set("/camera/crop/image_raw")
-        self.topic_options = ["/camera/crop/image_raw", "/camera/hsv/image_raw"]
+        self.image_topic_var.set("/camera/resize_hsv/image_raw")
+        self.topic_options = ["/camera/resize_hsv/image_raw"]
         self.topic_menu = tk.OptionMenu(self.control_frame, self.image_topic_var, *self.topic_options) # Command is implicitly handled by trace
         self.topic_menu.pack(pady=2, padx=5, fill=tk.X)
         self.image_topic_var.trace_add("write", self.on_topic_change)
