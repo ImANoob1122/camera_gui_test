@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>camera_gui_test</name>
+  <version>0.0.0</version>
+  <description>A simple GUI for camera image processing.</description>
+  <maintainer email="user@todo.todo">user</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_detector</depend> <!-- For message types -->
+
+  <!-- System Prerequisites:
+       This package requires Tkinter and Pillow (PIL.ImageTk) for the GUI.
+       On Ubuntu, these can typically be installed with:
+       sudo apt-get update
+       sudo apt-get install python3-tk python3-pil python3-pil.imagetk
+       Ensure these are installed on your system.
+  -->
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
