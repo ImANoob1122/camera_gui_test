@@ -57,8 +57,13 @@ class CameraGuiApp(Node):
         self.control_frame.pack(side=tk.RIGHT, fill=tk.Y)
         self.control_frame.pack_propagate(False)
 
+        # Pixel Info Label
+        self.pixel_info_label = tk.Label(self.control_frame, text="Pixel: (N/A)")
+        self.pixel_info_label.pack(side=tk.BOTTOM, pady=5, padx=5, anchor=tk.W)
+
         self.image_label = tk.Label(self.image_frame, text="Waiting for Image...")
         self.image_label.pack(fill=tk.BOTH, expand=True)
+        self.image_label.bind("<Motion>", self.show_pixel_info)
 
         # Image Topic Selection
         tk.Label(self.control_frame, text="Select Image Topic:").pack(pady=(10,0), padx=5, anchor=tk.W)
@@ -91,6 +96,77 @@ class CameraGuiApp(Node):
         self.on_show_balls_change() # Call to setup subscriber based on initial checkbox state
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def show_pixel_info(self, event):
+        if self.current_cv_image is None:
+            self.pixel_info_label.config(text="Pixel: (N/A)")
+            return
+
+        if not hasattr(self.image_label, 'image') or self.image_label.image is None:
+            self.pixel_info_label.config(text="Pixel: (Image not loaded)")
+            return
+
+        # Dimensions of the PhotoImage displayed
+        img_display_width = self.image_label.image.width()
+        img_display_height = self.image_label.image.height()
+
+        # Dimensions of the Label widget
+        label_width = self.image_label.winfo_width()
+        label_height = self.image_label.winfo_height()
+
+        # Calculate offset of the image within the label (assuming default centering)
+        offset_x = (label_width - img_display_width) // 2
+        offset_y = (label_height - img_display_height) // 2
+
+        # Mouse coordinates relative to the label
+        label_x = event.x
+        label_y = event.y
+
+        # Convert mouse coordinates to image coordinates
+        img_x = label_x - offset_x
+        img_y = label_y - offset_y
+
+        # Check if inside the displayed image bounds
+        if 0 <= img_x < img_display_width and 0 <= img_y < img_display_height:
+            # Ensure current_cv_image dimensions are consistent with display,
+            # or apply scaling factor if original image is scaled before display.
+            # For this implementation, we assume img_x, img_y are valid for current_cv_image
+            # if no scaling happened between cv_image and photoimage.
+            # If current_cv_image is the original (potentially larger) and photoimage is a thumbnail,
+            # this needs scaling:
+            # original_height, original_width = self.current_cv_image.shape[:2]
+            # scale_x = original_width / img_display_width
+            # scale_y = original_height / img_display_height
+            # cv_x = int(img_x * scale_x)
+            # cv_y = int(img_y * scale_y)
+            # if 0 <= cv_y < original_height and 0 <= cv_x < original_width:
+            #    bgr_color = self.current_cv_image[cv_y, cv_x]
+            #    info_text = f"Pixel @ ({img_x},{img_y}) -> ({cv_x},{cv_y}): BGR({bgr_color[0]}, {bgr_color[1]}, {bgr_color[2]})"
+            #    self.pixel_info_label.config(text=info_text)
+            # else:
+            #    self.pixel_info_label.config(text="Pixel: (Mapped out of CV image)")
+            # For now, assuming 1:1 mapping for simplicity based on current problem description
+            # This means self.current_cv_image should have dimensions img_display_width x img_display_height
+            
+            # Check if img_x and img_y are within the bounds of self.current_cv_image
+            # This check is vital if self.current_cv_image is not the same size as displayed image
+            # (e.g. if current_cv_image is full res, and display is a thumbnail)
+            # However, the current update_gui_display logic converts current_cv_image to PhotoImage directly
+            # which implies they are of the same dimensions.
+            cv_height, cv_width = self.current_cv_image.shape[:2]
+            if 0 <= img_y < cv_height and 0 <= img_x < cv_width:
+                 bgr_color = self.current_cv_image[img_y, img_x]
+                 info_text = f"Pixel @ ({img_x},{img_y}): BGR({bgr_color[0]}, {bgr_color[1]}, {bgr_color[2]})"
+                 self.pixel_info_label.config(text=info_text)
+            else:
+                # This case implies that the displayed image (PhotoImage) is a cropped/scaled version
+                # of self.current_cv_image, and the click was within the PhotoImage but outside
+                # the corresponding area in self.current_cv_image after coordinate transformation.
+                # Or, img_x/img_y were calculated such that they are outside cv_image.
+                self.pixel_info_label.config(text="Pixel: (Coord error in CV image)")
+
+        else:
+            self.pixel_info_label.config(text="Pixel: (Out of image bounds)")
 
     def on_topic_change(self, *args): # name, index, mode (from trace)
         selected_topic = self.image_topic_var.get()
